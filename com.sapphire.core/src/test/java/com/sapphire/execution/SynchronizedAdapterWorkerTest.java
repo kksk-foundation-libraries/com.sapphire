@@ -2,19 +2,16 @@ package com.sapphire.execution;
 
 import org.junit.Test;
 
-import com.sapphire.execution.AdapterWorker;
-
-public class AdapterWorkerTest {
-
+public class SynchronizedAdapterWorkerTest {
 	@Test
 	public void test() {
-		AdapterWorker<LongMessage> adapterWorker = new AdapterWorker<>("TestEngine", 2, 1_000_000, 100_000, 1_000);
-		for (int i = 0; i < 10; i++) {
+		SynchronizedAdapterWorker<LongMessage> adapterWorker = new SynchronizedAdapterWorker<>("TestEngine", 4, 1_000_000, 100_000, 1_000);
+		for (int i = 0; i < 100; i++) {
 			adapterWorker.addAdapter(new TestAdapter());
 		}
 		long counter = 0;
 		adapterWorker.getEngine().start();
-		for (int i = 0; i < 10_000_000; i++) {
+		for (int i = 0; i < 1_000_000; i++) {
 			counter++;
 			try {
 				LongMessage message = new LongMessage(counter);
