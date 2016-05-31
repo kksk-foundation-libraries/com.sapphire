@@ -1,9 +1,13 @@
 package com.sapphire.execution;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
 public abstract class Worker<Message> implements Runnable {
 	private final boolean sync;
 	private final Engine engine;
 	private final MessageBlockingQueue<Message> queue;
+	private final BlockingQueue<MessageHolder<Message>> holderPool;
 
 	public Worker(Engine engine, int queueSize) {
 		this(engine, queueSize, false);
@@ -13,10 +17,35 @@ public abstract class Worker<Message> implements Runnable {
 		this.engine = engine;
 		this.queue = new MessageBlockingQueue<>(queueSize);
 		this.sync = sync;
+		int size = 0;
+		if (sync) {
+			size = engine.workerThreads * 2;
+		} else {
+			size = Math.max(Math.min(10_000, queueSize / 2), engine.workerThreads * 2);
+		}
+		holderPool = new ArrayBlockingQueue<>(size);
+		for (int i = 0; i < size; i++) {
+			holderPool.add(new MessageHolder<Message>(null));
+		}
+	}
+
+	private MessageHolder<Message> getHolder(Message message) {
+		MessageHolder<Message> holder = holderPool.poll();
+		if (holder == null) {
+			holder = new MessageHolder<>(message);
+		} else {
+			holder.message = message;
+		}
+		return holder;
+	}
+
+	private void releaseHolder(MessageHolder<Message> holder) {
+		if (holder != null)
+			holderPool.offer(holder);
 	}
 
 	public final void execute(Message message) throws InterruptedException {
-		MessageHolder<Message> holder = new MessageHolder<Message>(message);
+		MessageHolder<Message> holder = getHolder(message);
 		if (sync) {
 			holder.lock.lock();
 		}
@@ -25,6 +54,7 @@ public abstract class Worker<Message> implements Runnable {
 		if (sync) {
 			holder.condition.await();
 			holder.lock.unlock();
+			releaseHolder(holder);
 		}
 	}
 
@@ -77,6 +107,8 @@ public abstract class Worker<Message> implements Runnable {
 		if (sync && holder != null) {
 			holder.condition.signalAll();
 			holder.lock.unlock();
+		} else {
+			releaseHolder(holder);
 		}
 	}
 

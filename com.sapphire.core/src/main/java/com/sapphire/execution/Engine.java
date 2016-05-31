@@ -24,7 +24,7 @@ public class Engine {
 
 	private final BlockingQueue<Runnable> workerQueue;
 	private final NamedThreadFactory threadFactory;
-	private final int workerThreads;
+	final int workerThreads;
 	private PausableThreadPoolExecutor threadPool = null;
 
 	public Engine(String engineName, int workerThreads, int queueSize) {

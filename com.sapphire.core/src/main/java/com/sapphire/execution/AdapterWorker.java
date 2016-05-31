@@ -27,6 +27,7 @@ public final class AdapterWorker<Message> extends Worker<Message> {
 	public AdapterWorker(Engine engine, int queueSize, int adapterMaxCount, long checkInterval) {
 		this(engine, queueSize, adapterMaxCount, checkInterval, false);
 	}
+
 	public AdapterWorker(Engine engine, int queueSize, int adapterMaxCount, long checkInterval, boolean sync) {
 		super(engine, queueSize, sync);
 		this.engine = engine;
