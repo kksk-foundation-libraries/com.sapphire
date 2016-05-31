@@ -1,19 +1,31 @@
 package com.sapphire.execution;
 
-import java.util.concurrent.BlockingQueue;
-
 public abstract class Worker<Message> implements Runnable {
+	private final boolean sync;
 	private final Engine engine;
-	private final BlockingQueue<Message> queue;
+	private final MessageBlockingQueue<Message> queue;
 
-	public Worker(Engine engine, BlockingQueue<Message> queue) {
+	public Worker(Engine engine, int queueSize) {
+		this(engine, queueSize, false);
+	}
+
+	public Worker(Engine engine, int queueSize, boolean sync) {
 		this.engine = engine;
-		this.queue = queue;
+		this.queue = new MessageBlockingQueue<>(queueSize);
+		this.sync = sync;
 	}
 
 	public final void execute(Message message) throws InterruptedException {
-		queue.put(message);
+		MessageHolder<Message> holder = new MessageHolder<Message>(message);
+		if (sync) {
+			holder.lock.lock();
+		}
+		queue.put(holder);
 		engine.execute(this);
+		if (sync) {
+			holder.condition.await();
+			holder.lock.unlock();
+		}
 	}
 
 	@Override
@@ -25,26 +37,46 @@ public abstract class Worker<Message> implements Runnable {
 			processingError(null, e);
 			return;
 		}
+		MessageHolder<Message> holder = null;
 		Message message = null;
 		try {
-			message = queue.take();
+			holder = queue.take();
+			if (sync) {
+				holder.lock.lock();
+			}
+			message = holder.message;
 		} catch (InterruptedException e) {
 			processingError(message, new RuntimeException(e));
+			unlock(holder);
 			return;
 		}
 		try {
-			if (!process(message))
+			if (!process(message)) {
+				unlock(holder);
 				return;
+			}
 		} catch (RuntimeException e) {
 			processingError(message, e);
+			unlock(holder);
 			return;
 		}
 		try {
-			if (!postprocess())
+			if (!postprocess()) {
+				unlock(holder);
 				return;
+			}
 		} catch (RuntimeException e) {
 			processingError(message, e);
+			unlock(holder);
 			return;
+		}
+		unlock(holder);
+	}
+
+	private void unlock(MessageHolder<Message> holder) {
+		if (sync && holder != null) {
+			holder.condition.signalAll();
+			holder.lock.unlock();
 		}
 	}
 
