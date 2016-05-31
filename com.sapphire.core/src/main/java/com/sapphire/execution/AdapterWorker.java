@@ -17,11 +17,18 @@ public final class AdapterWorker<Message> extends Worker<Message> {
 	}
 
 	public AdapterWorker(String engineName, int workerThreads, int queueSize, int adapterMaxCount, long checkInterval) {
-		this(new Engine(engineName, workerThreads, queueSize), new ArrayBlockingQueue<>(queueSize), adapterMaxCount, checkInterval);
+		this(new Engine(engineName, workerThreads, queueSize), queueSize, adapterMaxCount, checkInterval, false);
 	}
 
-	public AdapterWorker(Engine engine, BlockingQueue<Message> queue, int adapterMaxCount, long checkInterval) {
-		super(engine, queue);
+	public AdapterWorker(String engineName, int workerThreads, int queueSize, int adapterMaxCount, long checkInterval, boolean sync) {
+		this(new Engine(engineName, workerThreads, queueSize), queueSize, adapterMaxCount, checkInterval, sync);
+	}
+
+	public AdapterWorker(Engine engine, int queueSize, int adapterMaxCount, long checkInterval) {
+		this(engine, queueSize, adapterMaxCount, checkInterval, false);
+	}
+	public AdapterWorker(Engine engine, int queueSize, int adapterMaxCount, long checkInterval, boolean sync) {
+		super(engine, queueSize, sync);
 		this.engine = engine;
 		ready = new ArrayBlockingQueue<>(adapterMaxCount);
 		standby = new ArrayBlockingQueue<>(adapterMaxCount);
