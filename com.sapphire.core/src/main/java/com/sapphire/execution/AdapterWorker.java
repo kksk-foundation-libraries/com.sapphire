@@ -5,14 +5,14 @@ import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public final class AdapterWorker<Message> extends Worker<Message> {
+public class AdapterWorker<Message> extends Worker<Message> {
 	private static final Timer TIMER = new Timer("StandbyAdapterChecker", true);
 
-	private final BlockingQueue<Adapter<Message>> ready;
-	private final BlockingQueue<Adapter<Message>> standby;
+	final BlockingQueue<Adapter<Message>> ready;
+	final BlockingQueue<Adapter<Message>> standby;
 	private final Engine engine;
 
-	public Engine getEngine() {
+	public final Engine getEngine() {
 		return engine;
 	}
 
@@ -47,7 +47,7 @@ public final class AdapterWorker<Message> extends Worker<Message> {
 		TIMER.schedule(task, 0, checkInterval);
 	}
 
-	public void addAdapter(Adapter<Message> adapter) {
+	public final void addAdapter(Adapter<Message> adapter) {
 		if (adapter == null)
 			return;
 		try {
@@ -58,7 +58,7 @@ public final class AdapterWorker<Message> extends Worker<Message> {
 	}
 
 	@Override
-	public final boolean process(Message message) {
+	public boolean process(Message message) {
 		for (;;) {
 			try {
 				Adapter<Message> adapter = ready.take();

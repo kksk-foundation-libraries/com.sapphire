@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.sapphire.execution.Adapter;
 
-public class TestAdapter implements Adapter<Long> {
+public class TestAdapter implements Adapter<LongMessage> {
 	private static final AtomicLong SEQUENCE = new AtomicLong();
 	private final long sequence;
 	private boolean enabled = false;
@@ -38,7 +38,7 @@ public class TestAdapter implements Adapter<Long> {
 	}
 
 	@Override
-	public void execute(Long message) {
+	public void execute(LongMessage message) {
 		COUNTER.getAndIncrement();
 	}
 

@@ -11,7 +11,7 @@ public abstract class Worker<Message> implements Runnable {
 		this.queue = queue;
 	}
 
-	public final void execute(Message message) throws InterruptedException {
+	public void execute(Message message) throws InterruptedException {
 		queue.put(message);
 		engine.execute(this);
 	}
