@@ -47,6 +47,11 @@
 				<artifactId>kryo-shaded</artifactId>
 				<version>3.0.3</version>
 			</dependency>
+			<dependency>
+				<groupId>com.sapphire</groupId>
+				<artifactId>core</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 </project>
